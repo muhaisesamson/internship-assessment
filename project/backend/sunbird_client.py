@@ -164,7 +164,7 @@ def translate_text(text, target_language):
         
     
     
-def text_to_speech(text, language, output_file_path="temp/output_audio.ogg"):
+def text_to_speech(text, language, output_file_path="temp/output_audio.wav"):
     
     url = f"{BASE_URL}/tasks/tts"
     
@@ -185,15 +185,32 @@ def text_to_speech(text, language, output_file_path="temp/output_audio.ogg"):
         )
         
         response.raise_for_status()
+
+        data = response.json()
+
+        print("DEBUG TTS RESPONSE:", data)
         
         
+        audio_url = data.get("output", {}).get("audio_url") or data.get("audio_url")
+        
+        if not audio_url:
+            return {
+                "error": "Audio URL not found in response",
+                "raw_response": data
+            }
+        
+        audio_response = requests.get(audio_url)
+        audio_response.raise_for_status()
+        os.makedirs("temp", exist_ok=True)
+
         with open(output_file_path, 'wb') as output_file:
-            output_file.write(response.content)
-            
-        return {
+            output_file.write(audio_response.content)
+
+        return{
             "output_file_path": output_file_path
         }
-        
+  
+    
     except requests.exceptions.RequestException as e:
         
         if hasattr(e, 'response') and e.response is not None:
@@ -203,3 +220,5 @@ def text_to_speech(text, language, output_file_path="temp/output_audio.ogg"):
                 "api_response": e.response.text
             }
         return {"error": str(e)}
+
+    
