@@ -18,6 +18,8 @@ def process_input(input_type, input_data, target_language):
     elif input_type == "text":
         
         original_text = input_data
+        transcript = input_data
+        
         
     else:
         return {
